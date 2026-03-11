@@ -226,7 +226,12 @@ Each of the 6 security detectors is a standalone module with no dependencies on 
 
 ## Deployment
 
-The REST API is deployed on **Render** (free tier). A `render.yaml` is included for one-click deployment:
+The REST API is deployed on **Koyeb** (free tier, always-on — no cold starts).
+
+To deploy your own instance:
+1. Sign up at [koyeb.com](https://www.koyeb.com) and connect your GitHub repo
+2. Set the build command to `npm install && npm run build` and start command to `npm start`
+3. Koyeb automatically sets the `PORT` environment variable
 
 ```bash
 # Build and start locally
@@ -234,4 +239,4 @@ npm run build
 npm start
 ```
 
-The server reads `PORT` from environment variables (Render sets this automatically) and listens on `0.0.0.0`.
+The server reads `PORT` from environment variables and listens on `0.0.0.0`.
