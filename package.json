@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "commander": "^12.1.0",
-    "fastify": "^4.28.0",
+    "fastify": "^5.8.1",
     "@fastify/cors": "^9.0.1",
     "viem": "^2.17.0",
     "dotenv": "^16.4.5"
