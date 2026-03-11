@@ -4,6 +4,8 @@ A comprehensive EVM bytecode analysis toolkit that fetches any deployed smart co
 human-readable opcodes, reconstructs the control flow graph, extracts the public interface, and identifies
 common security patterns — all without access to source code.
 
+Video demonstration link : https://youtu.be/3SnB6YVcX8M
+
 **Built for the Luganodes SDE Intern Assessment (Task 2)**
 
 ---
