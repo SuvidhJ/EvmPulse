@@ -6,6 +6,161 @@ common security patterns — all without access to source code.
 
 **Built for the Luganodes SDE Intern Assessment (Task 2)**
 
+---
+
+## Table of Contents
+
+- [Prerequisites](#prerequisites)
+- [Installation & Setup](#installation--setup)
+- [How to Run](#how-to-run)
+  - [CLI Usage](#cli-usage)
+  - [REST API](#rest-api)
+- [Features](#features)
+- [Architecture](#architecture)
+- [Testing](#testing)
+- [Deployment](#deployment)
+- [API Endpoints](#api-endpoints)
+- [Environment Variables](#environment-variables)
+- [Design Decisions](#design-decisions)
+- [Known Limitations](#known-limitations)
+
+---
+
+## Prerequisites
+
+- **Node.js** >= 18.0.0 ([download](https://nodejs.org/))
+- **npm** (comes with Node.js)
+- **Git** ([download](https://git-scm.com/))
+- **Graphviz** (optional, only for SVG graph export — [download](https://graphviz.org/download/))
+
+## Installation & Setup
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/SuvidhJ/Luganodes-Hiring---Task-2.git
+cd Luganodes-Hiring---Task-2
+
+# 2. Install dependencies
+npm install
+
+# 3. (Optional) Copy and configure environment variables
+cp .env.example .env
+# Edit .env if you want to use custom RPC endpoints — defaults work out of the box
+
+# 4. Verify the build compiles cleanly
+npm run typecheck
+
+# 5. Run tests to confirm everything works
+npm test
+```
+
+That's it — no API keys needed. The default RPC endpoints are free public nodes.
+
+---
+
+## How to Run
+
+### CLI Usage
+
+The CLI analyzes any deployed contract by address. Run it with `npx ts-node src/index.ts`:
+
+```bash
+# Basic: Disassemble a contract
+npx ts-node src/index.ts 0xdAC17F958D2ee523a2206206994597C13D831ec7 --disasm
+
+# Extract function selectors
+npx ts-node src/index.ts 0xdAC17F958D2ee523a2206206994597C13D831ec7 --selectors
+
+# Build Control Flow Graph
+npx ts-node src/index.ts 0xdAC17F958D2ee523a2206206994597C13D831ec7 --cfg
+
+# Run security analysis
+npx ts-node src/index.ts 0xdAC17F958D2ee523a2206206994597C13D831ec7 --security
+
+# Full analysis (all of the above)
+npx ts-node src/index.ts 0xdAC17F958D2ee523a2206206994597C13D831ec7 --all
+```
+
+#### Output Formats
+
+```bash
+# JSON output (machine-readable, includes CFG adjacency list)
+npx ts-node src/index.ts 0xdAC17F958D2ee523a2206206994597C13D831ec7 --all --output json
+
+# Save JSON to a file
+npx ts-node src/index.ts 0xdAC17F958D2ee523a2206206994597C13D831ec7 --all --output json --out result.json
+
+# DOT format (for Graphviz)
+npx ts-node src/index.ts 0xdAC17F958D2ee523a2206206994597C13D831ec7 --cfg --output dot
+
+# Generate SVG image (requires Graphviz installed)
+npx ts-node src/index.ts 0xdAC17F958D2ee523a2206206994597C13D831ec7 --cfg --svg
+```
+
+#### Multi-Chain Support
+
+```bash
+# Analyze on Ethereum (default)
+npx ts-node src/index.ts 0xdAC17F958D2ee523a2206206994597C13D831ec7 --all
+
+# Analyze on Base L2
+npx ts-node src/index.ts 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913 --chain base --selectors
+
+# Analyze on Arbitrum
+npx ts-node src/index.ts <address> --chain arbitrum --all
+
+# Analyze on Polygon
+npx ts-node src/index.ts <address> --chain polygon --all
+
+# Use a custom RPC URL
+npx ts-node src/index.ts <address> --rpc https://your-rpc-url.com --selectors
+```
+
+#### Other CLI Options
+
+```bash
+# Check version
+npx ts-node src/index.ts --version
+
+# Show help
+npx ts-node src/index.ts --help
+```
+
+### REST API
+
+```bash
+# Start the API server (development mode)
+npx ts-node src/server.ts
+
+# Or build and start in production mode
+npm run build
+npm start
+```
+
+The server starts on `http://localhost:3000` by default.
+
+#### Example API Requests
+
+```bash
+# Health check
+curl http://localhost:3000/health
+
+# Full analysis
+curl -X POST http://localhost:3000/analyze \
+  -H "Content-Type: application/json" \
+  -d '{"address": "0xdAC17F958D2ee523a2206206994597C13D831ec7", "chain": "ethereum"}'
+
+# Analysis with specific modules only
+curl -X POST http://localhost:3000/analyze \
+  -H "Content-Type: application/json" \
+  -d '{"address": "0xdAC17F958D2ee523a2206206994597C13D831ec7", "analyses": ["selectors", "security"]}'
+
+# Quick disassembly
+curl http://localhost:3000/disasm/0xdAC17F958D2ee523a2206206994597C13D831ec7?chain=ethereum
+```
+
+---
+
 ## Features
 
 ### 1. Bytecode Fetcher & Disassembler
@@ -46,63 +201,7 @@ common security patterns — all without access to source code.
 - REST API: `POST /analyze`, `GET /disasm/:address`, `GET /health`
 - Supports **Ethereum**, **Base**, **Arbitrum**, and **Polygon** via configurable RPC URLs
 
-## Quick Start
-
-```bash
-# Install dependencies
-npm install
-
-# Type-check without emitting (verify build)
-npm run typecheck
-
-# CLI: Analyze USDT on Ethereum mainnet
-npx ts-node src/index.ts 0xdAC17F958D2ee523a2206206994597C13D831ec7 --selectors --security
-
-# CLI: Full analysis with all flags
-npx ts-node src/index.ts 0xdAC17F958D2ee523a2206206994597C13D831ec7 --all
-
-# CLI: Output as JSON (includes CFG adjacency list, blocks, edges)
-npx ts-node src/index.ts 0xdAC17F958D2ee523a2206206994597C13D831ec7 --all --output json
-
-# CLI: Output CFG as DOT
-npx ts-node src/index.ts 0xdAC17F958D2ee523a2206206994597C13D831ec7 --cfg --output dot
-
-# CLI: Generate SVG (requires Graphviz)
-npx ts-node src/index.ts 0xdAC17F958D2ee523a2206206994597C13D831ec7 --cfg --svg
-
-# CLI: Analyze on Base L2
-npx ts-node src/index.ts 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913 --chain base --selectors
-
-# CLI: Check version
-npx ts-node src/index.ts --version
-
-# Start REST API server
-npx ts-node src/server.ts
-# Then: curl -X POST http://localhost:3000/analyze -H "Content-Type: application/json" \
-#   -d '{"address": "0xdAC17F958D2ee523a2206206994597C13D831ec7", "chain": "ethereum"}'
-
-# Run tests
-npm test
-```
-
-## Environment Variables
-
-Copy `.env.example` to `.env` to customize RPC endpoints:
-
-```bash
-cp .env.example .env
-```
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `ETH_RPC` | `https://ethereum-rpc.publicnode.com` | Ethereum mainnet RPC |
-| `BASE_RPC` | `https://base-rpc.publicnode.com` | Base L2 RPC |
-| `ARBITRUM_RPC` | `https://arbitrum-one-rpc.publicnode.com` | Arbitrum L2 RPC |
-| `POLYGON_RPC` | `https://polygon-bor-rpc.publicnode.com` | Polygon L2 RPC |
-| `PORT` | `3000` | REST API server port |
-| `HOST` | `0.0.0.0` | REST API server host |
-
-All default RPCs are free public endpoints — no API keys required.
+---
 
 ## Architecture
 
@@ -131,7 +230,7 @@ src/
 │   ├── access-control.ts # Owner check detection
 │   └── payable.ts    # Payable vs non-payable classification
 └── test/
-    ├── unit.test.ts        # 75 unit tests
+    ├── unit.test.ts        # 93 unit tests
     └── integration.test.ts # 4 integration tests (mainnet)
 ```
 
@@ -178,8 +277,8 @@ npx jest src/test/unit.test.ts --verbose
 npx jest src/test/integration.test.ts --verbose
 ```
 
-**Test coverage**: 93 tests total
-- 89 unit tests covering all modules (disassembler, selectors, CFG, all 6 security detectors, proxy detection, ERC-165, server validation/SSRF, formatter, chains, Huff-style bytecode analysis, binary-search dispatch resolution)
+**Test coverage**: 97 tests total (all passing)
+- 93 unit tests covering all modules (disassembler, selectors, CFG, all 6 security detectors, proxy detection, ERC-165, server validation/SSRF, formatter, chains, Huff-style bytecode analysis, binary-search dispatch resolution)
 - 4 integration tests including:
   - USDT full analysis (selectors, CFG, security)
   - USDC proxy detection (EIP-1967 + custom slot resolution)
@@ -226,12 +325,45 @@ Each of the 6 security detectors is a standalone module with no dependencies on 
 
 ## Deployment
 
-The REST API is deployed on **Render** (free tier). A `render.yaml` is included for one-click deployment:
+The REST API can be deployed on **Render** (free tier). A `render.yaml` is included for easy setup.
+
+### Deploy to Render
+
+1. Go to [render.com](https://render.com) and sign up / log in
+2. Click **New** → **Web Service** → connect your GitHub repo
+3. Render auto-detects the `render.yaml`. Verify these settings:
+   - **Build Command**: `npm install && npm run build`
+   - **Start Command**: `npm start`
+   - **Instance Type**: Free
+4. Click **Deploy Web Service**
+
+Render sets the `PORT` environment variable automatically. No other env vars are required — the app uses free public RPCs by default.
+
+> **Note:** Render's free tier sleeps after 15 minutes of inactivity. You can use [cron-job.org](https://cron-job.org) (free) to ping your `/health` endpoint every 14 minutes to keep it awake.
+
+### Run Locally in Production Mode
 
 ```bash
-# Build and start locally
 npm run build
 npm start
+# Server starts on http://localhost:3000
 ```
 
-The server reads `PORT` from environment variables (Render sets this automatically) and listens on `0.0.0.0`.
+## Environment Variables
+
+Copy `.env.example` to `.env` to customize RPC endpoints:
+
+```bash
+cp .env.example .env
+```
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `ETH_RPC` | `https://ethereum-rpc.publicnode.com` | Ethereum mainnet RPC |
+| `BASE_RPC` | `https://base-rpc.publicnode.com` | Base L2 RPC |
+| `ARBITRUM_RPC` | `https://arbitrum-one-rpc.publicnode.com` | Arbitrum L2 RPC |
+| `POLYGON_RPC` | `https://polygon-bor-rpc.publicnode.com` | Polygon L2 RPC |
+| `PORT` | `3000` | REST API server port |
+| `HOST` | `0.0.0.0` | REST API server host |
+
+All default RPCs are free public endpoints — no API keys required.
